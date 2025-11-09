@@ -12,7 +12,7 @@ pub struct Pallet {
 
 impl Pallet {
     pub fn new() -> Self {
-        Self { block_number : BlockNumber, nonce: BTreeMap::new()}
+        Self { block_number : 0, nonce: BTreeMap::new()}
     }
 
     pub fn block_number(&self) -> BlockNumber {
