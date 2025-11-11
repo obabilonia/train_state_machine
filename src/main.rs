@@ -2,6 +2,7 @@ mod balances;
 mod support;
 mod system;
 use crate::support::Dispatch;
+mod proof_of_existence;
 
 
 mod types {
