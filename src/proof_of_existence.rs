@@ -1,5 +1,6 @@
 use core::fmt::Debug;
 use std::collections::BTreeMap;
+use crate::support::DispatchResult;
 
 pub trait Config: crate::system::Config {
     /// The type which represents the content that can be claimed using this pallet.
@@ -24,5 +25,97 @@ impl<T: Config> Pallet<T> {
         /* TODO: Return a new instance of the `Pallet` struct. */
         Self { claims: BTreeMap::new() }
     }
+
+    /// Get the owner (if any) of a claim.
+//    pub fn get_claim(&self, claim: &T::Content) -> Option<&T::AccountId> {
+//        *self.claims.get(claim).unwrap_or(None)
+
+    pub fn get_claim(&self, claim: &T::Content) -> Option<&T::AccountId> {
+        self.claims.get(claim)
+    }
+
+    pub fn create_claim(&mut self, caller: T::AccountId, claim: T::Content) -> DispatchResult {
+        if self.claims.contains_key(&claim) {
+            return Err("This content has already been claimed.");
+        }
+        self.claims.insert(claim, caller);
+        Ok(())
+    }
+
+    pub fn revoke_claim(&mut self, caller: T::AccountId, claim: T::Content) -> DispatchResult {
+        match self.claims.get(&claim) {
+            Some(owner) if *owner == caller => {
+                self.claims.remove(&claim);
+                Ok(())
+            }
+            Some(_) => Err("You are not the owner of this claim."),
+            None => Err("This claim does not exist."),
+        }
+    }
+
 }
 
+pub enum Call<T: Config> {
+
+    CreateClaim { claim: T::Content },
+    RevokeClaim { claim: T::Content },
+}
+
+impl<T: Config> crate::support::Dispatch for Pallet<T> {
+    type Caller = T::AccountId;
+    type Call = Call<T>;
+
+    fn dispatch(
+        &mut self,
+        caller: Self::Caller,
+        call: Self::Call,
+    ) -> crate::support::DispatchResult {
+        match call {
+            Call::CreateClaim { claim } => {
+                self.create_claim(caller, claim)?
+            }
+            Call::RevokeClaim { claim } => {
+                self.revoke_claim(caller, claim)?
+            }
+        }
+        Ok(())
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    struct TestConfig;
+
+    impl super::Config for TestConfig {
+        type Content = String;
+    }
+
+    impl crate::system::Config for TestConfig {
+        type AccountId = String;
+        type BlockNumber = u32;
+        type Nonce = u32;
+    }
+
+    #[test]
+    fn basic_proof_of_existence() {
+        /*
+            TODO:
+            Create an end to end test verifying the basic functionality of this pallet.
+                - Check the initial state is as you expect.
+                - Check that all functions work successfully.
+                - Check that all error conditions error as expected.
+        */
+        let mut poe = super::Pallet::<TestConfig>::new();
+        let alice = "alice".to_string();
+        let bob = "bob".to_string();
+        let content = "my_content".to_string();
+        assert_eq!(poe.get_claim(&content), None);
+        assert_eq!(poe.create_claim(alice.clone(), content.clone()), Ok(()));
+        assert_eq!(poe.get_claim(&content), Some(&alice));
+        assert_eq!(poe.create_claim(bob.clone(), content.clone()), Err("This content has already been claimed."));
+        assert_eq!(poe.revoke_claim(bob.clone(), content.clone()), Err("You are not the owner of this claim."));
+        assert_eq!(poe.revoke_claim(alice.clone(), content.clone()), Ok(()));
+        assert_eq!(poe.get_claim(&content), None);
+    }
+}
