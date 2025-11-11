@@ -66,19 +66,6 @@ impl Runtime {
                                 )
                             });
         }
-
-        /* TODO:
-            - Increment the system's block number.
-            - Check that the block number of the incoming block matches the current block number,
-              or return an error.
-            - Iterate over the extrinsics in the block...
-                - Increment the nonce of the caller.
-                - Dispatch the extrinsic using the `caller` and the `call` contained in the extrinsic.
-                - Handle errors from `dispatch` same as we did for individual calls: printing any
-                  error and capturing the result.
-                - You can extend the error message to include information like the block number and
-                  extrinsic number.
-        */
         Ok(())
     }
     
@@ -116,19 +103,38 @@ fn main() {
 
     runtime.balances.set_balance(&alice, 100);
 
-    // start emulating a block
-    runtime.system.inc_block_number();
-    assert_eq!(runtime.system.block_number(), 1);
+    // // start emulating a block
+    // runtime.system.inc_block_number();
+    // assert_eq!(runtime.system.block_number(), 1);
 
-    // first transaction
-    runtime.system.inc_nonce(&alice);
-    let _res = runtime.balances.transfer(alice.clone(), bob, 30).map_err(|e| println!("Transaction failed: {}", e));
+    // // first transaction
+    // runtime.system.inc_nonce(&alice);
+    // let _res = runtime.balances.transfer(alice.clone(), bob, 30).map_err(|e| println!("Transaction failed: {}", e));
 
-    // second transaction
-    runtime.system.inc_nonce(&alice);
-    let _res = runtime.balances.transfer(alice, charlie, 20).map_err(|e| println!("Transaction failed: {}", e));
+    // // second transaction
+    // runtime.system.inc_nonce(&alice);
+    // let _res = runtime.balances.transfer(alice, charlie, 20).map_err(|e| println!("Transaction failed: {}", e));
+
+    // println!("{runtime:#?}");
+    //println!("Hello, world!");
+
+    let block_1 = types::Block {
+        header: support::Header { block_number: 1 },
+        extrinsics: vec![
+            support::Extrinsic {
+                caller: "alice".to_string(),
+                call: RuntimeCall::BalancesTransfer { to: "bob".to_string(), amount: 30 },
+            },
+            support::Extrinsic {
+                caller: "alice".to_string(),
+                call: RuntimeCall::BalancesTransfer { to: "charlie".to_string(), amount: 20 },
+            },
+        ],
+    };
+
+    runtime.execute_block(block_1).expect("invalid block");
 
     println!("{runtime:#?}");
-    //println!("Hello, world!");
+
 }
 
