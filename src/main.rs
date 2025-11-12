@@ -13,6 +13,7 @@ mod types {
     pub type Extrinsic = crate::support::Extrinsic<AccountId, crate::RuntimeCall>;
     pub type Header = crate::support::Header<BlockNumber>;
     pub type Block = crate::support::Block<Header, Extrinsic>;
+    pub type Content = String;
 }
 
 
@@ -20,12 +21,14 @@ mod types {
 // Note that it is just an accumulation of the calls exposed by each module.
 pub enum RuntimeCall {
     Balances(balances::Call<Runtime>),
+    ProofOfExistence(proof_of_existence::Call<Runtime>),
 }
 
 #[derive(Debug)]
 pub struct Runtime {
    system: system::Pallet<Self>,
    balances: balances::Pallet<Self>,
+   proof_of_existence: proof_of_existence::Pallet<Self>,
 }
 
 
@@ -39,12 +42,17 @@ impl balances::Config for Runtime {
     type Balance = types::Balance;
 }
 
+impl proof_of_existence::Config for Runtime {
+    type Content = types::Content;
+}
+
 
 impl Runtime {
     pub fn new() -> Self {
         Self {
             system: system::Pallet::new(), 
-            balances: balances::Pallet::new()
+            balances: balances::Pallet::new(),
+            proof_of_existence: proof_of_existence::Pallet::new()
         }
     }
 
@@ -89,6 +97,9 @@ impl crate::support::Dispatch for Runtime {
             RuntimeCall::Balances(call) => {
                 self.balances.dispatch(caller, call)?;
             }
+            RuntimeCall::ProofOfExistence(call) => {
+                self.proof_of_existence.dispatch(caller, call)?;
+            }
         }
         Ok(())
     }
@@ -102,23 +113,10 @@ fn main() {
     let bob = "bob".to_string();
     let charlie = "charlie".to_string();
 
+    /// Genesis
     runtime.balances.set_balance(&alice, 100);
 
-    // // start emulating a block
-    // runtime.system.inc_block_number();
-    // assert_eq!(runtime.system.block_number(), 1);
-
-    // // first transaction
-    // runtime.system.inc_nonce(&alice);
-    // let _res = runtime.balances.transfer(alice.clone(), bob, 30).map_err(|e| println!("Transaction failed: {}", e));
-
-    // // second transaction
-    // runtime.system.inc_nonce(&alice);
-    // let _res = runtime.balances.transfer(alice, charlie, 20).map_err(|e| println!("Transaction failed: {}", e));
-
-    // println!("{runtime:#?}");
-    //println!("Hello, world!");
-
+    /// Começa a produção de blocos
     let block_1 = types::Block {
         header: support::Header { block_number: 1 },
         extrinsics: vec![
@@ -132,9 +130,51 @@ fn main() {
             },
         ],
     };
-
     runtime.execute_block(block_1).expect("invalid block");
+    println!("Bloco number {}", runtime.system.block_number());
+    println!("{runtime:#?}");
 
+
+    let block_2 = types::Block {
+        header: support::Header { block_number: 2 },
+        extrinsics: vec![
+            support::Extrinsic {
+                caller: "alice".to_string(),
+                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim { claim: "hola".to_string() }),
+            },
+        ],
+    };
+    runtime.execute_block(block_2).expect("invalid block");
+    println!("Bloco number {}", runtime.system.block_number());
+    println!("{runtime:#?}");
+
+
+
+    let block_3 = types::Block {
+        header: support::Header { block_number: 3 },
+        extrinsics: vec![
+            support::Extrinsic {
+                caller: "alice".to_string(),
+                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim { claim: "hola".to_string() }),
+            },
+        ],
+    };
+    runtime.execute_block(block_3).expect("invalid block");
+    println!("Bloco number {}", runtime.system.block_number());
+    println!("{runtime:#?}");
+
+
+    let block_4 = types::Block {
+        header: support::Header { block_number: 4 },
+        extrinsics: vec![
+            support::Extrinsic {
+                caller: "alice".to_string(),
+                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::RevokeClaim { claim: "hola".to_string() }),
+            },
+        ],
+    };
+    runtime.execute_block(block_4).expect("invalid block");
+    println!("Bloco number {}", runtime.system.block_number());
     println!("{runtime:#?}");
 
 }
