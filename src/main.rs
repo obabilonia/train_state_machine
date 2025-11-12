@@ -113,20 +113,20 @@ fn main() {
     let bob = "bob".to_string();
     let charlie = "charlie".to_string();
 
-    /// Genesis
+    // Genesis
     runtime.balances.set_balance(&alice, 100);
 
-    /// Começa a produção de blocos
+    // Começa a produção de blocos
     let block_1 = types::Block {
         header: support::Header { block_number: 1 },
         extrinsics: vec![
             support::Extrinsic {
                 caller: "alice".to_string(),
-                call: RuntimeCall::Balances(balances::Call::Transfer { to: bob, amount: 30 }),
+                call: RuntimeCall::Balances(balances::Call::transfer { to: bob, amount: 30 }),
             },
             support::Extrinsic {
                 caller: "alice".to_string(),
-                call: RuntimeCall::Balances(balances::Call::Transfer { to: charlie, amount: 20 }),
+                call: RuntimeCall::Balances(balances::Call::transfer { to: charlie, amount: 20 }),
             },
         ],
     };
@@ -140,7 +140,7 @@ fn main() {
         extrinsics: vec![
             support::Extrinsic {
                 caller: "alice".to_string(),
-                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim { claim: "hola".to_string() }),
+                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::create_claim { claim: "hola".to_string() }),
             },
         ],
     };
@@ -155,7 +155,7 @@ fn main() {
         extrinsics: vec![
             support::Extrinsic {
                 caller: "alice".to_string(),
-                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim { claim: "hola".to_string() }),
+                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::create_claim { claim: "hola".to_string() }),
             },
         ],
     };
@@ -169,7 +169,7 @@ fn main() {
         extrinsics: vec![
             support::Extrinsic {
                 caller: "alice".to_string(),
-                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::RevokeClaim { claim: "hola".to_string() }),
+                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::revoke_claim { claim: "hola".to_string() }),
             },
         ],
     };

@@ -23,7 +23,10 @@ impl<T:Config > Pallet<T> {
     pub fn balance(&mut self, who: &T::AccountId) -> T::Balance {
         *self.balances.get(who).unwrap_or(&T::Balance::zero())
     }
+}
 
+#[macros::call]
+impl<T:Config > Pallet<T> {
     pub fn transfer(
         &mut self,
         caller: T::AccountId,
@@ -44,31 +47,6 @@ impl<T:Config > Pallet<T> {
 }
 
 
-pub enum Call<T: Config> {
-    Transfer { to: T::AccountId, amount: T::Balance },
-    //RemoveMe(core::marker::PhantomData<T>),
-}
-
-
-/// Implementation of the dispatch logic, mapping from `BalancesCall` to the appropriate underlying
-/// function we want to execute.
-impl<T: Config> crate::support::Dispatch for Pallet<T> {
-    type Caller = T::AccountId;
-    type Call = Call<T>;
-
-    fn dispatch(
-        &mut self,
-        caller: Self::Caller,
-        call: Self::Call,
-    ) -> crate::support::DispatchResult {
-        match call {
-            Call::Transfer { to, amount } => {
-                self.transfer(caller, to, amount)?;
-            }
-        }
-        Ok(())
-    }
-}
 
 
 #[cfg(test)]
